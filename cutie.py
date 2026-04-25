@@ -55,31 +55,7 @@ def get_number(
     Returns:
         float: The number input by the user.
     """
-    return_value: Optional[float] = None
-    while return_value is None:
-        input_value = input(prompt + " ")
-        try:
-            return_value = float(input_value)
-        except ValueError:
-            print("Not a valid number.\033[K\033[1A\r\033[K", end="")
-        if not allow_float and return_value is not None:
-            if return_value != int(return_value):
-                print("Has to be an integer.\033[K\033[1A\r\033[K", end="")
-                return_value = None
-        if min_value is not None and return_value is not None:
-            if return_value < min_value:
-                print(f"Has to be at least {min_value}.\033[K\033[1A\r\033[K", end="")
-                return_value = None
-        if max_value is not None and return_value is not None:
-            if return_value > max_value:
-                print(f"Has to be at most {max_value}.\033[1A\r\033[K", end="")
-                return_value = None
-        if return_value is not None:
-            break
-    print("\033[K", end="")
-    if allow_float:
-        return return_value
-    return int(return_value)
+    raise NotImplementedError
 
 
 def secure_input(prompt: str) -> str:
@@ -91,7 +67,7 @@ def secure_input(prompt: str) -> str:
     Returns:
         str: The secure input.
     """
-    return getpass.getpass(prompt + " ")
+    raise NotImplementedError
 
 
 def select(
@@ -117,45 +93,7 @@ def select(
     Returns:
         int: The index that has been selected.
     """
-    print("\n" * (len(options) - 1))
-    if caption_indices is None:
-        caption_indices = []
-    while True:
-        print(f"\033[{len(options) + 1}A")
-        for i, option in enumerate(options):
-            if i not in caption_indices:
-                print(
-                    "\033[K{}{}".format(
-                        selected_prefix if i == selected_index else deselected_prefix,
-                        option,
-                    )
-                )
-            elif i in caption_indices:
-                print("\033[K{}{}".format(caption_prefix, options[i]))
-        keypress = readchar.readkey()
-        if keypress in DefaultKeys.up:
-            new_index = selected_index
-            while new_index > 0:
-                new_index -= 1
-                if new_index not in caption_indices:
-                    selected_index = new_index
-                    break
-        elif keypress in DefaultKeys.down:
-            new_index = selected_index
-            while new_index < len(options) - 1:
-                new_index += 1
-                if new_index not in caption_indices:
-                    selected_index = new_index
-                    break
-        elif (
-            keypress in DefaultKeys.confirm
-            or confirm_on_select
-            and keypress in DefaultKeys.select
-        ):
-            break
-        elif keypress in DefaultKeys.interrupt:
-            raise KeyboardInterrupt
-    return selected_index
+    raise NotImplementedError
 
 
 def select_multiple(
@@ -206,86 +144,7 @@ def select_multiple(
     Returns:
         List[int]: The indices that have been selected
     """
-    print("\n" * (len(options) - 1))
-    if caption_indices is None:
-        caption_indices = []
-    if ticked_indices is None:
-        ticked_indices = []
-    max_index = len(options) - (1 if hide_confirm else 0)
-    error_message = ""
-    while True:
-        print(f"\033[{len(options) + 1}A")
-        for i, option in enumerate(options):
-            prefix = ""
-            if i in caption_indices:
-                prefix = caption_prefix
-            elif i == cursor_index:
-                if i in ticked_indices:
-                    prefix = selected_ticked_prefix
-                else:
-                    prefix = selected_unticked_prefix
-            else:
-                if i in ticked_indices:
-                    prefix = deselected_ticked_prefix
-                else:
-                    prefix = deselected_unticked_prefix
-            print("\033[K{}{}".format(prefix, option))
-        if hide_confirm:
-            print(f"{error_message}\033[K", end="", flush=True)
-        else:
-            if cursor_index == max_index:
-                print(
-                    f"{selected_confirm_label} {error_message}\033[K",
-                    end="",
-                    flush=True,
-                )
-            else:
-                print(
-                    f"{deselected_confirm_label} {error_message}\033[K",
-                    end="",
-                    flush=True,
-                )
-        error_message = ""
-        keypress = readchar.readkey()
-        if keypress in DefaultKeys.up:
-            new_index = cursor_index
-            while new_index > 0:
-                new_index -= 1
-                if new_index not in caption_indices:
-                    cursor_index = new_index
-                    break
-        elif keypress in DefaultKeys.down:
-            new_index = cursor_index
-            while new_index + 1 <= max_index:
-                new_index += 1
-                if new_index not in caption_indices:
-                    cursor_index = new_index
-                    break
-        elif (
-            hide_confirm
-            and keypress in DefaultKeys.confirm
-            or not hide_confirm
-            and cursor_index == max_index
-        ):
-            if minimal_count > len(ticked_indices):
-                error_message = f"Must select at least {minimal_count} options"
-            elif maximal_count is not None and maximal_count < len(ticked_indices):
-                error_message = f"Must select at most {maximal_count} options"
-            else:
-                break
-        elif (
-            keypress in DefaultKeys.select
-            or not hide_confirm
-            and keypress in DefaultKeys.confirm
-        ):
-            if cursor_index in ticked_indices:
-                ticked_indices.remove(cursor_index)
-            else:
-                ticked_indices.append(cursor_index)
-        elif keypress in DefaultKeys.interrupt:
-            raise KeyboardInterrupt
-    print("\r\033[K", end="", flush=True)
-    return ticked_indices
+    raise NotImplementedError
 
 
 def prompt_yes_or_no(
@@ -315,54 +174,4 @@ def prompt_yes_or_no(
     Returns:
         Optional[bool]: The bool what has been selected.
     """
-    is_yes = default_is_yes
-    is_selected = enter_empty_confirms
-    current_message = ""
-    yn_prompt = f" ({yes_text[0]}/{no_text[0]}) " if char_prompt else ": "
-    print()
-    while True:
-        yes = is_yes and is_selected
-        no = not is_yes and is_selected
-        print("\033[K" f"{selected_prefix if yes else deselected_prefix}{yes_text}")
-        print("\033[K" f"{selected_prefix if no else deselected_prefix}{no_text}")
-        print(
-            "\033[3A\r\033[K" f"{question}{yn_prompt}{current_message}",
-            end="",
-            flush=True,
-        )
-        keypress = readchar.readkey()
-        if keypress in DefaultKeys.down or keypress in DefaultKeys.up:
-            is_yes = not is_yes
-            is_selected = True
-            current_message = yes_text if is_yes else no_text
-        elif keypress in DefaultKeys.delete:
-            if current_message:
-                current_message = current_message[:-1]
-        elif keypress in DefaultKeys.interrupt:
-            raise KeyboardInterrupt
-        elif keypress in DefaultKeys.confirm:
-            if is_selected:
-                break
-        elif keypress in "\t":
-            if is_selected:
-                current_message = yes_text if is_yes else no_text
-        else:
-            current_message += keypress
-            match_yes = yes_text
-            match_no = no_text
-            match_text = current_message
-            if not has_to_match_case:
-                match_yes = match_yes.upper()
-                match_no = match_no.upper()
-                match_text = match_text.upper()
-            if match_no.startswith(match_text):
-                is_selected = True
-                is_yes = False
-            elif match_yes.startswith(match_text):
-                is_selected = True
-                is_yes = True
-            else:
-                is_selected = False
-        print()
-    print("\033[K\n\033[K\n\033[K\n\033[3A")
-    return is_selected and is_yes
+    raise NotImplementedError
